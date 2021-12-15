@@ -1,0 +1,2 @@
+BOARD_Y_DIM = 8
+BOARD_X_DIM = 8
