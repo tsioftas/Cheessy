@@ -1,7 +1,10 @@
-# Call V0 the top-down view of the board where [0,0] is the top-left corner and white is at the bottom
+import constants
+
+# Call V0 the top-down view of the board where [0,0] is the top-left corner and white initial pieces
+# are at the bottom. X-coordinates increase from top to bottom and y-coordinates from left to right.
 """
 This class is to store coordinate variables. Coordinates are stored 
-in matrix index form in P0. High-level methods
+in matrix index form in V0. High-level methods
 can be used to retrieve the coordinates in different systems.
 """
 class Coord:
@@ -9,10 +12,10 @@ class Coord:
     """
     Constructor for coordinate class.
 
-    row (int): the row number in P0. An integer in the range [0,7]
-    col (int): the columnt number in P0. An integer in the range [0,7]
+    x (int): the row number in V0. An integer in the range [0,7]
+    y (int): the columnt number in V0. An integer in the range [0,7]
     """
-    def __init__(self, row: int, col: int):
-        assert 0 <= row + column and row + column <= 14, f"Cannot create invalid position [{row}, {column}] in P0."
-        self.row = row
-        self.col = col
+    def __init__(self, x: int, y: int):
+        assert 0 <= x + y and x + y <= 14, f"Cannot create invalid position [{x}, {y}] in P0."
+        self.x = x
+        self.y = y
