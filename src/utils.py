@@ -16,6 +16,11 @@ class Coord:
     y (int): the columnt number in V0. An integer in the range [0,7]
     """
     def __init__(self, x: int, y: int):
-        assert 0 <= x + y and x + y <= 14, f"Cannot create invalid position [{x}, {y}] in P0."
         self.x = x
         self.y = y
+        assert self.is_valid_coord(), f"Cannot create invalid position [{x}, {y}] in P0."
+
+
+
+    def is_valid_coord(self):
+        return 0 <= self.x and self.x <= 7 and 0 <= self.y and self.y <= 7

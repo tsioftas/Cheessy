@@ -4,10 +4,12 @@ import os
 
 from chess_board import Chessboard
 from chess_pieces import PieceInterface
-from constants import ASSETS_PATH,\
+from constants import ASSETS_PATH, Colour,\
     WHITE_SQUARE_ASSET, BLACK_SQUARE_ASSET, \
-    WHITE_ROOK_ASSET, BLACK_ROOK_ASSET, Colour
+    WHITE_ROOK_ASSET, BLACK_ROOK_ASSET, \
+    WHITE_KNIGHT_ASSET, BLACK_KNIGHT_ASSET
 from common_imports import Rook
+from knight import Knight
 
 """
 To be used to bring together and coordinate all graphics items.
@@ -51,6 +53,22 @@ class RookGraphicsController(GraphicsControllerInterface):
             return self.black_rook_img
 
 """
+To manage all knight-related graphics tasks.
+"""
+class KnightGraphicsController(GraphicsControllerInterface):
+
+    def __init__(self, assets_path: str):
+        super().__init__(assets_path)
+        self.white_knight_img = self.get_asset(WHITE_KNIGHT_ASSET)
+        self.black_knight_img = self.get_asset(BLACK_KNIGHT_ASSET)
+
+    def get_image(self, knight):
+        if knight.colour == Colour.White:
+            return self.white_knight_img
+        else:
+            return self.black_knight_img
+
+"""
 To manage all chessboard-related graphics tasks.
 """
 class ChessboardGraphicsController(GraphicsControllerInterface):
@@ -81,7 +99,8 @@ class ChessboardGraphicsController(GraphicsControllerInterface):
     def image_from_piece(self, piece: PieceInterface):
         t = type(piece)
         graphics_controller_dict = {
-            Rook: RookGraphicsController(self.assets_path)
+            Rook: RookGraphicsController(self.assets_path),
+            Knight: KnightGraphicsController(self.assets_path)
         }
         gc = graphics_controller_dict[t]
         assert gc, f"No graphics found for piece of type \"{t}\""

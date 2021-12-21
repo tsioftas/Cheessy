@@ -4,6 +4,7 @@ from constants import Colour
 import constants
 from common_imports import List
 from chess_board import Chessboard, Move
+from knight import Knight
 from utils import Coord
 from rook import Rook
 
@@ -12,6 +13,7 @@ class OptionsDeterminerInterface:
     class RookOptionsDeterminer:
 
         def determine_options(piece: PieceInterface, pieces: List[PieceInterface], chessboard: Chessboard) -> List[Coord]:
+            assert type(piece) == Rook, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Rook\""
             # Select the valid destinations given the chessboard
             valid_destinations: List[Coord] = []
             # First vertically
@@ -23,6 +25,30 @@ class OptionsDeterminerInterface:
                 pieces,
                 chessboard))
             return [Move(piece, new_pos) for new_pos in valid_destinations]
+    
+    class KnightOptionsDeterminer:
+
+        def determine_options(piece: PieceInterface, pieces: List[PieceInterface], chessboard: Chessboard) -> List[Coord]:
+            assert type(piece) == Knight, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Knight\""
+            # These are the possible moves for a knight
+            deltas = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (2, -1), (-2, 1), (-2, -1)]
+            # Select the valid destinations given the chessboard
+            valid_destinations: List[Coord] = []
+            pos = piece.pos
+            for delta_x, delta_y in deltas:
+                destination_is_valid = True
+                try:
+                    newpos = Coord(pos.x + delta_x, pos.y + delta_y)
+                except AssertionError:
+                    destination_is_valid = False
+                if destination_is_valid:
+                    dest_piece = chessboard.squares[newpos.x][newpos.y]
+                    if dest_piece is not None and dest_piece.colour == piece.colour:
+                        destination_is_valid = False
+                if destination_is_valid:
+                    valid_destinations.append(newpos)
+            return [Move(piece, new_pos) for new_pos in valid_destinations]
+
     
     def __get_vertical_destinations(piece: PieceInterface, pieces: List[PieceInterface], chessboard: Chessboard) -> List[Coord]:
         x = piece.pos.x
@@ -80,7 +106,8 @@ class OptionsDeterminerInterface:
 
 
     determiner_map = {
-        Rook: RookOptionsDeterminer
+        Rook: RookOptionsDeterminer,
+        Knight: KnightOptionsDeterminer
     }
     
     def determine_options(turnColour: Colour, chessboard: Chessboard) -> List[Coord]:
@@ -89,8 +116,6 @@ class OptionsDeterminerInterface:
         for piece in pieces:
             if piece.colour == turnColour:
                 t = type(piece)
-                print(t)
-                print(OptionsDeterminerInterface.determiner_map[t])
                 options.extend(OptionsDeterminerInterface.determiner_map[t].determine_options(piece, pieces, chessboard))
         return options
 

@@ -1,4 +1,5 @@
 from chess_board import Chessboard, Move
+from knight import Knight
 from utils import Coord
 from common_imports import TODO_Type, Rook
 from constants import Colour
@@ -12,7 +13,9 @@ class ChessboardController(Chessboard):
 
   INITIAL_PIECES = [
       Rook(Coord(0, 0), Colour.White),
-      Rook(Coord(7, 7), Colour.Black)
+      Rook(Coord(7, 7), Colour.Black),
+      Knight(Coord(0,1), Colour.White),
+      Knight(Coord(7,6), Colour.Black)
   ] # TODO: fill in!
 
 
