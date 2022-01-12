@@ -1,3 +1,4 @@
+from bishop import Bishop
 from chess_board import Chessboard, Move
 from knight import Knight
 from utils import Coord
@@ -15,7 +16,9 @@ class ChessboardController(Chessboard):
       Rook(Coord(0, 0), Colour.White),
       Rook(Coord(7, 7), Colour.Black),
       Knight(Coord(0,1), Colour.White),
-      Knight(Coord(7,6), Colour.Black)
+      Knight(Coord(7,6), Colour.Black),
+      Bishop(Coord(0,2), Colour.White),
+      Bishop(Coord(7,5), Colour.Black)
   ] # TODO: fill in!
 
 

@@ -7,9 +7,11 @@ from chess_pieces import PieceInterface
 from constants import ASSETS_PATH, Colour,\
     WHITE_SQUARE_ASSET, BLACK_SQUARE_ASSET, \
     WHITE_ROOK_ASSET, BLACK_ROOK_ASSET, \
-    WHITE_KNIGHT_ASSET, BLACK_KNIGHT_ASSET
+    WHITE_KNIGHT_ASSET, BLACK_KNIGHT_ASSET, \
+    WHITE_BISHOP_ASSET, BLACK_BISHOP_ASSET
 from common_imports import Rook
 from knight import Knight
+from bishop import Bishop
 
 """
 To be used to bring together and coordinate all graphics items.
@@ -69,6 +71,22 @@ class KnightGraphicsController(GraphicsControllerInterface):
             return self.black_knight_img
 
 """
+To manage all bishop-related graphics tasks.
+"""
+class BishopGraphicsController(GraphicsControllerInterface):
+
+    def __init__(self, assets_path: str):
+        super().__init__(assets_path)
+        self.white_bishop_img = self.get_asset(WHITE_BISHOP_ASSET)
+        self.black_bishop_img = self.get_asset(BLACK_BISHOP_ASSET)
+
+    def get_image(self, bishop):
+        if bishop.colour == Colour.White:
+            return self.white_bishop_img
+        else:
+            return self.black_bishop_img
+
+"""
 To manage all chessboard-related graphics tasks.
 """
 class ChessboardGraphicsController(GraphicsControllerInterface):
@@ -100,7 +118,8 @@ class ChessboardGraphicsController(GraphicsControllerInterface):
         t = type(piece)
         graphics_controller_dict = {
             Rook: RookGraphicsController(self.assets_path),
-            Knight: KnightGraphicsController(self.assets_path)
+            Knight: KnightGraphicsController(self.assets_path),
+            Bishop: BishopGraphicsController(self.assets_path)
         }
         gc = graphics_controller_dict[t]
         assert gc, f"No graphics found for piece of type \"{t}\""

@@ -18,9 +18,16 @@ class Coord:
     def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
-        assert self.is_valid_coord(), f"Cannot create invalid position [{x}, {y}] in P0."
-
-
+        valid = self.is_valid_coord()
+        assert valid, f"Cannot create invalid position [{x}, {y}] in P0."
 
     def is_valid_coord(self):
         return 0 <= self.x and self.x <= 7 and 0 <= self.y and self.y <= 7
+    
+    @staticmethod
+    def create_valid_coord(x: int, y: int):
+        if 0 <= x and x <= 7 and 0 <= y and y <= 7:
+            return Coord(x, y)
+        else:
+            return None
+
