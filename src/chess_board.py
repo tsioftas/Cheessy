@@ -1,6 +1,7 @@
 from common_imports import List
 from constants import BOARD_Y_DIM, BOARD_X_DIM, Colour
 from chess_pieces import PieceInterface
+from pawn import Pawn
 from rook import Rook
 from utils import Coord
 
@@ -36,6 +37,8 @@ class Chessboard:
     
     def __move_piece(self, piece: PieceInterface, destination: Coord):
         start = piece.pos
+        if type(piece) == Pawn:
+            piece.first_move_done = True
         if not self.__is_empty_at(destination):
             assert self.__at(destination).colour != piece.colour, "Invalid move, cannot move to a square containing a piece of the same colour"
             # other piece is captured

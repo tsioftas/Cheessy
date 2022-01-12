@@ -14,23 +14,27 @@ if __name__ == "__main__":
     chessboardController = ChessboardController()
     player1 = Player(Colour.White, algorithm=RandomAlgorithm, seed=1)
     player2 = Player(Colour.Black, algorithm=RandomAlgorithm, seed=2)
-
+    move_count = 0
     while True:
         # get moves and update board
         move = player1.get_next_move(chessboard)
         if move is None:
             print("Player 2 wins!")
             break
-        print(f"Moving the {move.piece.colour} Rook from [{move.piece.pos.x}, {move.piece.pos.y}] to [{move.destination.x}, {move.destination.y}]")
+        move_count += 1
+        print(f"{move_count}. Moving the {move.piece.colour} {move.piece.name} from [{move.piece.pos.x}, {move.piece.pos.y}] to [{move.destination.x}, {move.destination.y}]")
         chessboardController.applyMove(chessboard, move)
         # draw graphics
         graphicsControllerHub.display_image(chessboard)
+        input()
         move = player2.get_next_move(chessboard)
         if move is None:
             print("Player 1 wins!")
             break
-        print(f"Moving the {move.piece.colour} Rook from [{move.piece.pos.x}, {move.piece.pos.y}] to [{move.destination.x}, {move.destination.y}]")
+        move_count += 1
+        print(f"{move_count}. Moving the {move.piece.colour} {move.piece.name} from [{move.piece.pos.x}, {move.piece.pos.y}] to [{move.destination.x}, {move.destination.y}]")
         chessboardController.applyMove(chessboard, move)
         # draw graphics
         graphicsControllerHub.display_image(chessboard)
+        input()
         # TODO: add win check

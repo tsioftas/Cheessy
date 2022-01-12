@@ -14,7 +14,7 @@ class OptionsDeterminerInterface:
 
     class RookOptionsDeterminer:
 
-        def determine_options(piece: PieceInterface, pieces: List[PieceInterface], chessboard: Chessboard) -> List[Coord]:
+        def determine_options(piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
             assert type(piece) == Rook, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Rook\""
             # Select the valid destinations given the chessboard
             valid_destinations: List[Coord] = []
@@ -28,7 +28,7 @@ class OptionsDeterminerInterface:
     
     class KnightOptionsDeterminer:
 
-        def determine_options(piece: PieceInterface, pieces: List[PieceInterface], chessboard: Chessboard) -> List[Coord]:
+        def determine_options(piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
             assert type(piece) == Knight, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Knight\""
             # These are the possible moves for a knight
             deltas = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (2, -1), (-2, 1), (-2, -1)]
@@ -51,7 +51,7 @@ class OptionsDeterminerInterface:
     
     class BishopOptionsDeterminer:
 
-        def determine_options(piece: PieceInterface, pieces: List[PieceInterface], chessboard: Chessboard) -> List[Coord]:
+        def determine_options(piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
             assert type(piece) == Bishop, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Bishop\""
             # Select the valid destinations given the chessboard
             valid_destinations: List[Coord] = []
@@ -65,16 +65,32 @@ class OptionsDeterminerInterface:
     
     class PawnOptionsDeterminer:
 
-        def determine_options(piece: PieceInterface, pieces: List[PieceInterface], chessboard: Chessboard) -> List[Coord]:
-            assert type(piece) == Bishop, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Bishop\""
+        def determine_options(piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
+            assert type(piece) == Pawn, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Pawn\""
             # Select the valid destinations given the chessboard
             valid_destinations: List[Coord] = []
-            # First vertically
-            valid_destinations.extend(OptionsDeterminerInterface._OptionsDeterminerInterface__get_tlbr_diagonal_destinations(piece,
-                chessboard))
-            # Then horizontally
-            valid_destinations.extend(OptionsDeterminerInterface._OptionsDeterminerInterface__get_bltr_diagonal_destinations(piece,
-                chessboard))
+            # Determine forward direction based on colour
+            forward = -1 if piece.colour == Colour.White else 1
+            # One forward
+            one_f = Coord(piece.pos.x+forward, piece.pos.y)
+            if chessboard.squares[one_f.x][one_f.y] is None:
+                # square is empty, move can be made
+                valid_destinations.append(one_f)
+                if not piece.first_move_done:
+                    # could move two squares
+                    two_f = Coord(piece.pos.x+2*forward, piece.pos.y)
+                    if chessboard.squares[two_f.x][two_f.y] is None:
+                        valid_destinations.append(two_f)
+                if piece.pos.y > 0:
+                    one_f_l = Coord(piece.pos.x + forward, piece.pos.y-1)
+                    target = chessboard.squares[one_f_l.x][one_f_l.y] 
+                    if target is not None and target.colour != piece.colour:
+                        valid_destinations.append(one_f_l)
+                if piece.pos.y < constants.BOARD_Y_DIM-1:
+                    one_f_r = Coord(piece.pos.x + forward, piece.pos.y+1)
+                    target = chessboard.squares[one_f_r.x][one_f_r.y] 
+                    if target is not None and target.colour != piece.colour:
+                        valid_destinations.append(one_f_r)
             return [Move(piece, new_pos) for new_pos in valid_destinations]
 
     def __get_sequential_movement_destinations(destinations: List[Coord], piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
@@ -82,21 +98,28 @@ class OptionsDeterminerInterface:
         y = piece.pos.y
         buffer: List[Coord] = []
         valid_destinations: List[Coord] = []
-        # Move from 0 to x-1
-        for i in range(x):
+        # Move from 0 to pos-1
+        i = 0
+        while True:
             current_pos = destinations[i]
             if current_pos is None:
+                i += 1
                 continue
+            elif destinations[i].x == x and destinations[i].y == y:
+                break
             if chessboard.squares[current_pos.x][current_pos.y] is not None:
                 buffer = [current_pos] if chessboard.squares[current_pos.x][current_pos.y].colour != piece.colour else []
             else:
                 buffer.append(current_pos)
+            i += 1
         valid_destinations.extend(buffer)
         buffer = []
-        # Move from x+1 to BOARD_X_DIM-1
-        for i in range(x+1,constants.BOARD_X_DIM):
+        # Move from pos+1 to BOARD_X_DIM-1
+        i += 1
+        while i < len(destinations):
             current_pos = destinations[i]
             if current_pos is None:
+                i += 1
                 continue
             if chessboard.squares[current_pos.x][current_pos.y] is not None:
                 if chessboard.squares[current_pos.x][current_pos.y].colour != piece.colour:
@@ -104,6 +127,7 @@ class OptionsDeterminerInterface:
                 break
             else:
                 buffer.append(current_pos)
+            i += 1
         valid_destinations.extend(buffer)
         return valid_destinations
 
@@ -111,26 +135,26 @@ class OptionsDeterminerInterface:
         x = piece.pos.x
         y = piece.pos.y
         k = x-y # this is constant along the main diagonal
-        tlbr_diagonal_destinations = [Coord.create_valid_coord(i,i-k) for i in [j for j in range(constants.BOARD_X_DIM)]]
+        tlbr_diagonal_destinations = [Coord.create_valid_coord(i,i-k) for i in range(constants.BOARD_X_DIM)]
         return OptionsDeterminerInterface.__get_sequential_movement_destinations(tlbr_diagonal_destinations, piece, chessboard)
     
     def __get_bltr_diagonal_destinations(piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
         x = piece.pos.x
         y = piece.pos.y
         k = x+y # this is constant along the main diagonal
-        bltr_diagonal_destinations = [Coord.create_valid_coord(i,k-i) for i in [j for j in range(constants.BOARD_X_DIM)]]
+        bltr_diagonal_destinations = [Coord.create_valid_coord(i,k-i) for i in range(constants.BOARD_X_DIM)]
         return OptionsDeterminerInterface.__get_sequential_movement_destinations(bltr_diagonal_destinations, piece, chessboard)
         
     
     def __get_vertical_destinations(piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
         y = piece.pos.y
-        vertical_destinations = [Coord(i,y) for i in [j for j in range(constants.BOARD_X_DIM)]]
+        vertical_destinations = [Coord(i,y) for i in range(constants.BOARD_X_DIM)]
         return OptionsDeterminerInterface.__get_sequential_movement_destinations(vertical_destinations, piece, chessboard)
         
 
     def __get_horizontal_destinations(piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
         x = piece.pos.x
-        horizontal_destinations = [Coord(x,i) for i in [j for j in range(constants.BOARD_Y_DIM)]]
+        horizontal_destinations = [Coord(x,i) for i in range(constants.BOARD_Y_DIM)]
         return OptionsDeterminerInterface.__get_sequential_movement_destinations(horizontal_destinations, piece, chessboard)
 
 
@@ -147,7 +171,7 @@ class OptionsDeterminerInterface:
         for piece in pieces:
             if piece.colour == turnColour:
                 t = type(piece)
-                options.extend(OptionsDeterminerInterface.determiner_map[t].determine_options(piece, pieces, chessboard))
+                options.extend(OptionsDeterminerInterface.determiner_map[t].determine_options(piece, chessboard))
         return options
 
     

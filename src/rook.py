@@ -8,4 +8,5 @@ class Rook(PieceInterface):
         position: Coord,
         colour: Colour):
         super().__init__(position, colour)
+        self.name = "Rook"
 

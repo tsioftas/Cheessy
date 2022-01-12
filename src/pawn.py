@@ -8,4 +8,6 @@ class Pawn(PieceInterface):
         position: Coord,
         colour: Colour):
         super().__init__(position, colour)
+        self.first_move_done = False
+        self.name = "Pawn"
 
