@@ -1,0 +1,6 @@
+Queen
+King
+Check (forbid moves that lead to it and also only allow moves that lead out of it)
+Castling
+En passant
+Pawn promoting
