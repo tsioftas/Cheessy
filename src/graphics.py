@@ -9,11 +9,13 @@ from constants import ASSETS_PATH, Colour,\
     WHITE_ROOK_ASSET, BLACK_ROOK_ASSET, \
     WHITE_KNIGHT_ASSET, BLACK_KNIGHT_ASSET, \
     WHITE_BISHOP_ASSET, BLACK_BISHOP_ASSET, \
-    WHITE_PAWN_ASSET, BLACK_PAWN_ASSET
+    WHITE_PAWN_ASSET, BLACK_PAWN_ASSET, \
+    WHITE_QUEEN_ASSET, BLACK_QUEEN_ASSET
 from common_imports import Rook
 from knight import Knight
 from bishop import Bishop
 from pawn import Pawn
+from queen import Queen
 
 """
 To be used to bring together and coordinate all graphics items.
@@ -104,6 +106,22 @@ class PawnGraphicsController(GraphicsControllerInterface):
         else:
             return self.black_pawn_img
 
+"""
+To manage all queen-related graphics tasks.
+"""
+class QueenGraphicsController(GraphicsControllerInterface):
+
+    def __init__(self, assets_path: str):
+        super().__init__(assets_path)
+        self.white_queen_img = self.get_asset(WHITE_QUEEN_ASSET)
+        self.black_queen_img = self.get_asset(BLACK_QUEEN_ASSET)
+
+    def get_image(self, queen):
+        if queen.colour == Colour.White:
+            return self.white_queen_img
+        else:
+            return self.black_queen_img
+
 
 """
 To manage all chessboard-related graphics tasks.
@@ -139,7 +157,8 @@ class ChessboardGraphicsController(GraphicsControllerInterface):
             Rook: RookGraphicsController(self.assets_path),
             Knight: KnightGraphicsController(self.assets_path),
             Bishop: BishopGraphicsController(self.assets_path),
-            Pawn: PawnGraphicsController(self.assets_path)
+            Pawn: PawnGraphicsController(self.assets_path),
+            Queen: QueenGraphicsController(self.assets_path)
         }
         gc = graphics_controller_dict[t]
         assert gc, f"No graphics found for piece of type \"{t}\""

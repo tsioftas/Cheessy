@@ -48,6 +48,13 @@ class Chessboard:
         self.squares[start.x][start.y] = None
         self.squares[destination.x][destination.y] = piece
         piece.pos = destination
+    
+    def __replace_piece(self, position: Coord, replacement_type: PieceInterface):
+        piece_to_remove = self.__at(position)
+        replacement_piece = replacement_type(position, piece_to_remove.colour) # create instance
+        self.pieces.remove(piece_to_remove)
+        self.pieces.append(replacement_piece)
+        self.squares[position.x][position.y] = replacement_piece
 
 
 """
@@ -57,7 +64,9 @@ class Move:
 
     def __init__(self,
         piece: PieceInterface,
-        destination: Coord):
+        destination: Coord,
+        replacement_piece: PieceInterface = None):
             self.piece = piece
             self.destination = destination
+            self.replacement_piece = replacement_piece
 

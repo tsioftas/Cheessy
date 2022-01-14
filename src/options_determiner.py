@@ -1,12 +1,13 @@
 from bishop import Bishop
 from common_imports import TODO_Type
 from chess_pieces import PieceInterface
-from constants import Colour
+from constants import BOARD_X_DIM, Colour
 import constants
 from common_imports import List
 from chess_board import Chessboard, Move
 from knight import Knight
 from pawn import Pawn
+from queen import Queen
 from utils import Coord
 from rook import Rook
 
@@ -55,11 +56,31 @@ class OptionsDeterminerInterface:
             assert type(piece) == Bishop, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Bishop\""
             # Select the valid destinations given the chessboard
             valid_destinations: List[Coord] = []
-            # First vertically
+            # First top-left to bottom-right
             valid_destinations.extend(OptionsDeterminerInterface._OptionsDeterminerInterface__get_tlbr_diagonal_destinations(piece,
                 chessboard))
-            # Then horizontally
+            # Then bottom-left to top-right
             valid_destinations.extend(OptionsDeterminerInterface._OptionsDeterminerInterface__get_bltr_diagonal_destinations(piece,
+                chessboard))
+            return [Move(piece, new_pos) for new_pos in valid_destinations]
+    
+    class QueenOptionsDeterminer:
+
+        def determine_options(piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
+            assert type(piece) == Queen, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Queen\""
+            # Select the valid destinations given the chessboard
+            valid_destinations: List[Coord] = []
+            # First top-left to bottom-right
+            valid_destinations.extend(OptionsDeterminerInterface._OptionsDeterminerInterface__get_tlbr_diagonal_destinations(piece,
+                chessboard))
+            # Then bottom-left to top-right
+            valid_destinations.extend(OptionsDeterminerInterface._OptionsDeterminerInterface__get_bltr_diagonal_destinations(piece,
+                chessboard))
+            # Also vertically
+            valid_destinations.extend(OptionsDeterminerInterface._OptionsDeterminerInterface__get_vertical_destinations(piece,
+                chessboard))
+            # And horizontally
+            valid_destinations.extend(OptionsDeterminerInterface._OptionsDeterminerInterface__get_horizontal_destinations(piece,
                 chessboard))
             return [Move(piece, new_pos) for new_pos in valid_destinations]
     
@@ -91,7 +112,17 @@ class OptionsDeterminerInterface:
                     target = chessboard.squares[one_f_r.x][one_f_r.y] 
                     if target is not None and target.colour != piece.colour:
                         valid_destinations.append(one_f_r)
-            return [Move(piece, new_pos) for new_pos in valid_destinations]
+            #return [Move(piece, new_pos) for new_pos in valid_destinations]
+            ret = []
+            for new_pos in valid_destinations:
+                promotions = [Bishop, Rook, Knight, Queen]
+                if new_pos.x == 0 or new_pos.x == constants.BOARD_X_DIM-1:
+                    # Pawn is promoted
+                    for replacement_piece in promotions:
+                        ret.append(Move(piece, new_pos, replacement_piece))
+                else:
+                    ret.append(Move(piece, new_pos))
+            return ret
 
     def __get_sequential_movement_destinations(destinations: List[Coord], piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
         x = piece.pos.x
@@ -162,7 +193,8 @@ class OptionsDeterminerInterface:
         Rook: RookOptionsDeterminer,
         Knight: KnightOptionsDeterminer,
         Bishop: BishopOptionsDeterminer,
-        Pawn: PawnOptionsDeterminer
+        Pawn: PawnOptionsDeterminer,
+        Queen: QueenOptionsDeterminer
     }
     
     def determine_options(turnColour: Colour, chessboard: Chessboard) -> List[Coord]:

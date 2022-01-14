@@ -5,6 +5,7 @@ from utils import Coord
 from common_imports import TODO_Type, Rook
 from constants import Colour
 from pawn import Pawn
+from queen import Queen
 
 import copy
 
@@ -17,7 +18,7 @@ class ChessboardController(Chessboard):
     Rook(Coord(0,0), Colour.Black),
     Knight(Coord(0,1), Colour.Black),
     Bishop(Coord(0,2), Colour.Black),
-    # Black queen
+    Queen(Coord(0,3), Colour.Black),
     # Black king
     Bishop(Coord(0,5), Colour.Black),
     Knight(Coord(0,6), Colour.Black),
@@ -34,8 +35,8 @@ class ChessboardController(Chessboard):
     Rook(Coord(7,0), Colour.White),
     Knight(Coord(7,1), Colour.White),
     Bishop(Coord(7,2), Colour.White),
-    # Black queen
-    # Black king
+    Queen(Coord(7,3), Colour.White),
+    # White king
     Bishop(Coord(7,5), Colour.White),
     Knight(Coord(7,6), Colour.White),
     Rook(Coord(7,7), Colour.White),
@@ -55,3 +56,6 @@ class ChessboardController(Chessboard):
 
   def applyMove(self, chessboard: Chessboard, move: Move):
     chessboard._Chessboard__move_piece(move.piece, move.destination)
+    if move.replacement_piece is not None:
+      # Used for pawn promotion
+      chessboard._Chessboard__replace_piece(move.destination, move.replacement_piece)
