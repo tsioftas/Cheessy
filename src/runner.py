@@ -1,9 +1,9 @@
-from algorithm import RandomAlgorithm
+from algorithm import Justinianus, RandomAlgorithm
 from chess_board import Chessboard
 from chess_board_controller import ChessboardController
 from chess_pieces import PieceInterface
 from common_imports import List, TODO_Type
-from constants import Colour
+from constants import _COLOUR
 from player import Player
 from graphics import GraphicsControllerHub
 
@@ -12,8 +12,8 @@ if __name__ == "__main__":
     initialPieces: List[PieceInterface] = ChessboardController.INITIAL_PIECES
     chessboard = Chessboard(initialPieces)
     chessboardController = ChessboardController()
-    player1 = Player(Colour.White, algorithm=RandomAlgorithm, seed=1)
-    player2 = Player(Colour.Black, algorithm=RandomAlgorithm, seed=2)
+    player1 = Player(_COLOUR.White, algorithm=Justinianus, seed=1)
+    player2 = Player(_COLOUR.Black, algorithm=Justinianus, seed=2)
     move_count = 0
     while True:
         # get moves and update board

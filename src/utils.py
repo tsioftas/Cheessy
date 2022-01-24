@@ -30,4 +30,10 @@ class Coord:
             return Coord(x, y)
         else:
             return None
+        
+    def __str__(self):
+        return f"Coord({self.x}, {self.y})"
+    
+    def __repr__(self):
+        return str(self)
 

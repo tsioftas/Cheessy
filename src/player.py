@@ -1,6 +1,6 @@
 from common_imports import TODO_Type
 from chess_pieces import PieceInterface
-from constants import Colour
+from constants import _COLOUR
 from utils import Coord
 from chess_board import Chessboard
 from algorithm import AlgorithmInterface
@@ -8,7 +8,7 @@ from algorithm import AlgorithmInterface
 class Player:
 
     def __init__(self,
-        colour: Colour,
+        colour: _COLOUR,
         algorithm: AlgorithmInterface,
         **kwargs):
         self.colour = colour

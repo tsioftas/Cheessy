@@ -1,6 +1,6 @@
 from common_imports import List
-from constants import BOARD_Y_DIM, BOARD_X_DIM, Colour
-from chess_pieces import PieceInterface
+from constants import _BOARD_Y_DIM, _BOARD_X_DIM, _COLOUR
+from chess_pieces import PieceInterface, getPieceCopy
 from pawn import Pawn
 from rook import Rook
 from utils import Coord
@@ -19,8 +19,8 @@ class Chessboard:
     """
     def __init__(self,
      pieces: List[PieceInterface] = []):
-        self.x_dim: int = BOARD_X_DIM
-        self.y_dim: int = BOARD_Y_DIM
+        self.x_dim: int = _BOARD_X_DIM
+        self.y_dim: int = _BOARD_Y_DIM
         # initialize squares as empty
         self.squares: List[List[PieceInterface]] = [[None for i in range(self.y_dim)] for j in range(self.x_dim)]
         # process any pieces given as arguments
@@ -55,6 +55,14 @@ class Chessboard:
         self.pieces.remove(piece_to_remove)
         self.pieces.append(replacement_piece)
         self.squares[position.x][position.y] = replacement_piece
+    
+    def getPieces(self, colour: _COLOUR, t: PieceInterface) -> List[PieceInterface]:
+        ret = []
+        for piece in self.pieces:
+            if piece.colour == colour and type(piece) == t:
+                ret.append(piece)
+        return ret
+    
 
 
 """
@@ -69,4 +77,17 @@ class Move:
             self.piece = piece
             self.destination = destination
             self.replacement_piece = replacement_piece
+    
+    def __str__(self):
+        if self.replacement_piece is None:
+            return f"{self.piece} moves to {self.destination}"
+        else:
+            return f"{self.piece} promoted {self.replacement_piece}"
+    
+    def __repr__(self):
+        return str(self)
+
+def getChessboardCopy(other: Chessboard):
+    pieces_copy = [getPieceCopy(p) for p in other.pieces]
+    return Chessboard(pieces_copy)
 

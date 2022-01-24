@@ -4,18 +4,20 @@ import os
 
 from chess_board import Chessboard
 from chess_pieces import PieceInterface
-from constants import ASSETS_PATH, Colour,\
-    WHITE_SQUARE_ASSET, BLACK_SQUARE_ASSET, \
-    WHITE_ROOK_ASSET, BLACK_ROOK_ASSET, \
-    WHITE_KNIGHT_ASSET, BLACK_KNIGHT_ASSET, \
-    WHITE_BISHOP_ASSET, BLACK_BISHOP_ASSET, \
-    WHITE_PAWN_ASSET, BLACK_PAWN_ASSET, \
-    WHITE_QUEEN_ASSET, BLACK_QUEEN_ASSET
-from common_imports import Rook
+from constants import _ASSETS_PATH, _COLOUR,\
+    _WHITE_SQUARE_ASSET, _BLACK_SQUARE_ASSET, \
+    _WHITE_ROOK_ASSET, _BLACK_ROOK_ASSET, \
+    _WHITE_KNIGHT_ASSET, _BLACK_KNIGHT_ASSET, \
+    _WHITE_BISHOP_ASSET, _BLACK_BISHOP_ASSET, \
+    _WHITE_PAWN_ASSET, _BLACK_PAWN_ASSET, \
+    _WHITE_QUEEN_ASSET, _BLACK_QUEEN_ASSET, \
+    _WHITE_KING_ASSET, _BLACK_KING_ASSET
+from rook import Rook
 from knight import Knight
 from bishop import Bishop
 from pawn import Pawn
 from queen import Queen
+from king import King
 
 """
 To be used to bring together and coordinate all graphics items.
@@ -23,7 +25,7 @@ To be used to bring together and coordinate all graphics items.
 class GraphicsControllerHub:
     
     def __init__(self):
-        self.chessboardGC = ChessboardGraphicsController(ASSETS_PATH)
+        self.chessboardGC = ChessboardGraphicsController(_ASSETS_PATH)
     
     def display_image(self, chessboard: Chessboard):
         image = self.chessboardGC.chessboardToImage(chessboard)
@@ -49,11 +51,11 @@ class RookGraphicsController(GraphicsControllerInterface):
 
     def __init__(self, assets_path: str):
         super().__init__(assets_path)
-        self.white_rook_img = self.get_asset(WHITE_ROOK_ASSET)
-        self.black_rook_img = self.get_asset(BLACK_ROOK_ASSET)
+        self.white_rook_img = self.get_asset(_WHITE_ROOK_ASSET)
+        self.black_rook_img = self.get_asset(_BLACK_ROOK_ASSET)
 
     def get_image(self, rook):
-        if rook.colour == Colour.White:
+        if rook.colour == _COLOUR.White:
             return self.white_rook_img
         else:
             return self.black_rook_img
@@ -65,11 +67,11 @@ class KnightGraphicsController(GraphicsControllerInterface):
 
     def __init__(self, assets_path: str):
         super().__init__(assets_path)
-        self.white_knight_img = self.get_asset(WHITE_KNIGHT_ASSET)
-        self.black_knight_img = self.get_asset(BLACK_KNIGHT_ASSET)
+        self.white_knight_img = self.get_asset(_WHITE_KNIGHT_ASSET)
+        self.black_knight_img = self.get_asset(_BLACK_KNIGHT_ASSET)
 
     def get_image(self, knight):
-        if knight.colour == Colour.White:
+        if knight.colour == _COLOUR.White:
             return self.white_knight_img
         else:
             return self.black_knight_img
@@ -81,11 +83,11 @@ class BishopGraphicsController(GraphicsControllerInterface):
 
     def __init__(self, assets_path: str):
         super().__init__(assets_path)
-        self.white_bishop_img = self.get_asset(WHITE_BISHOP_ASSET)
-        self.black_bishop_img = self.get_asset(BLACK_BISHOP_ASSET)
+        self.white_bishop_img = self.get_asset(_WHITE_BISHOP_ASSET)
+        self.black_bishop_img = self.get_asset(_BLACK_BISHOP_ASSET)
 
     def get_image(self, bishop):
-        if bishop.colour == Colour.White:
+        if bishop.colour == _COLOUR.White:
             return self.white_bishop_img
         else:
             return self.black_bishop_img
@@ -97,11 +99,11 @@ class PawnGraphicsController(GraphicsControllerInterface):
 
     def __init__(self, assets_path: str):
         super().__init__(assets_path)
-        self.white_pawn_img = self.get_asset(WHITE_PAWN_ASSET)
-        self.black_pawn_img = self.get_asset(BLACK_PAWN_ASSET)
+        self.white_pawn_img = self.get_asset(_WHITE_PAWN_ASSET)
+        self.black_pawn_img = self.get_asset(_BLACK_PAWN_ASSET)
 
     def get_image(self, pawn):
-        if pawn.colour == Colour.White:
+        if pawn.colour == _COLOUR.White:
             return self.white_pawn_img
         else:
             return self.black_pawn_img
@@ -113,14 +115,30 @@ class QueenGraphicsController(GraphicsControllerInterface):
 
     def __init__(self, assets_path: str):
         super().__init__(assets_path)
-        self.white_queen_img = self.get_asset(WHITE_QUEEN_ASSET)
-        self.black_queen_img = self.get_asset(BLACK_QUEEN_ASSET)
+        self.white_queen_img = self.get_asset(_WHITE_QUEEN_ASSET)
+        self.black_queen_img = self.get_asset(_BLACK_QUEEN_ASSET)
 
     def get_image(self, queen):
-        if queen.colour == Colour.White:
+        if queen.colour == _COLOUR.White:
             return self.white_queen_img
         else:
             return self.black_queen_img
+
+"""
+To manage all king-related graphics tasks.
+"""
+class KingGraphicsController(GraphicsControllerInterface):
+
+    def __init__(self, assets_path: str):
+        super().__init__(assets_path)
+        self.white_king_img = self.get_asset(_WHITE_KING_ASSET)
+        self.black_king_img = self.get_asset(_BLACK_KING_ASSET)
+
+    def get_image(self, king):
+        if king.colour == _COLOUR.White:
+            return self.white_king_img
+        else:
+            return self.black_king_img
 
 
 """
@@ -130,8 +148,8 @@ class ChessboardGraphicsController(GraphicsControllerInterface):
 
     def __init__(self, assets_path: str):
         super().__init__(assets_path)
-        self.white_square_img = self.get_asset(WHITE_SQUARE_ASSET)
-        self.black_square_img = self.get_asset(BLACK_SQUARE_ASSET)
+        self.white_square_img = self.get_asset(_WHITE_SQUARE_ASSET)
+        self.black_square_img = self.get_asset(_BLACK_SQUARE_ASSET)
         self.square_x_dim, self.square_y_dim, _ = self.white_square_img.shape
 
     def chessboardToImage(self, chessboard: Chessboard):
@@ -158,7 +176,8 @@ class ChessboardGraphicsController(GraphicsControllerInterface):
             Knight: KnightGraphicsController(self.assets_path),
             Bishop: BishopGraphicsController(self.assets_path),
             Pawn: PawnGraphicsController(self.assets_path),
-            Queen: QueenGraphicsController(self.assets_path)
+            Queen: QueenGraphicsController(self.assets_path),
+            King: KingGraphicsController(self.assets_path)
         }
         gc = graphics_controller_dict[t]
         assert gc, f"No graphics found for piece of type \"{t}\""
