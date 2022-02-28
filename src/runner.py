@@ -1,4 +1,4 @@
-from algorithm import Justinianus, RandomAlgorithm
+from algorithm import Justinianus, RandomAlgorithm, SharedResources
 from chess_board import Chessboard
 from chess_board_controller import ChessboardController
 from chess_pieces import PieceInterface
@@ -12,8 +12,9 @@ if __name__ == "__main__":
     initialPieces: List[PieceInterface] = ChessboardController.INITIAL_PIECES
     chessboard = Chessboard(initialPieces)
     chessboardController = ChessboardController()
-    player1 = Player(_COLOUR.White, algorithm=Justinianus, seed=1)
-    player2 = Player(_COLOUR.Black, algorithm=Justinianus, seed=2)
+    shared_resources = SharedResources()
+    player1 = Player(_COLOUR.White, algorithm=Justinianus, seed=1, shared_resources=shared_resources)
+    player2 = Player(_COLOUR.Black, algorithm=Justinianus, seed=2, shared_resources=shared_resources)
     move_count = 0
     while True:
         # get moves and update board
@@ -23,7 +24,7 @@ if __name__ == "__main__":
             break
         move_count += 1
         print(f"{move_count}. Moving the {move.piece.colour} {move.piece.name} from [{move.piece.pos.x}, {move.piece.pos.y}] to [{move.destination.x}, {move.destination.y}]")
-        chessboardController.applyMove(chessboard, move)
+        chessboard = shared_resources.current_state.chessboard
         # draw graphics
         graphicsControllerHub.display_image(chessboard)
         input()
@@ -33,7 +34,7 @@ if __name__ == "__main__":
             break
         move_count += 1
         print(f"{move_count}. Moving the {move.piece.colour} {move.piece.name} from [{move.piece.pos.x}, {move.piece.pos.y}] to [{move.destination.x}, {move.destination.y}]")
-        chessboardController.applyMove(chessboard, move)
+        chessboard = shared_resources.current_state.chessboard
         # draw graphics
         graphicsControllerHub.display_image(chessboard)
         input()

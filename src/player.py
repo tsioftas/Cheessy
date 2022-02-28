@@ -7,6 +7,8 @@ from algorithm import AlgorithmInterface
 
 class Player:
 
+    # C program
+
     def __init__(self,
         colour: _COLOUR,
         algorithm: AlgorithmInterface,
