@@ -106,22 +106,37 @@ class RecursionTreeNode:
                 self.node_info.game_state = _GAME_STATES.STALEMATE
         return self.node_info.game_state
     
-    def expand(self):
-        if self.child_states is None:
-            self.child_states = []
+    def expand(self, chosen_move=None):
+        if self.child_states is None or not chosen_move is None:
+            if self.child_states is None:
+                self.child_states = []
             self.child_to_move: Dict[RecursionTreeNode, Move] = {}
-            for move in self.current_player_moves:
+            self.move_to_child: Dict[Move, RecursionTreeNode] = {}
+            moves_to_expand = self.current_player_moves if chosen_move is None else [chosen_move]
+            for move in moves_to_expand:
                 new_chessboard = applyMoveToCopy(self.chessboard, move)
                 new_state = RecursionTreeNode(new_chessboard, self.opponent, self.node_valfunction, self.node_info_cache, self)
                 self.child_states.append(new_state)
                 self.child_to_move[new_state] = move
-        return
+                enc_move = (move.piece.pos.x, move.piece.pos.y, move.destination.x, move.destination.y)
+                self.move_to_child[enc_move] = new_state
+        if not chosen_move is None:
+            enc_move = (chosen_move.piece.pos.x, chosen_move.piece.pos.y, chosen_move.destination.x, chosen_move.destination.y)
+            return self.move_to_child[enc_move]
     
 
 def applyMoveToCopy(chessboard: Chessboard, move: Move) -> Chessboard:
     chessboard_copy = getChessboardCopy(chessboard)
     piece_copy = chessboard_copy.squares[move.piece.pos.x][move.piece.pos.y]
-    move_copy = Move(piece_copy, move.destination)
+    if not move.capture_piece is None:
+        capture_piece_copy = chessboard_copy.squares[move.capture_piece.pos.x][move.capture_piece.pos.y]
+    else:
+        capture_piece_copy = None
+    if move.castle is not None:
+        castle_copy = (chessboard_copy.squares[move.castle[0].pos.x][move.castle[0].pos.y], move.castle[1])
+    else:
+        castle_copy = None
+    move_copy = Move(piece_copy, move.destination, move.promotion_piece, capture_piece_copy, castle_copy)
     __cc.applyMove(chessboard_copy, move_copy)
     return chessboard_copy
     

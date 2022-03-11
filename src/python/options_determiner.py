@@ -1,5 +1,6 @@
 from ast import Pass
 from msvcrt import getche
+from shutil import move
 from turtle import undo
 from bishop import Bishop
 from chess_board_controller import ChessboardController
@@ -12,13 +13,32 @@ from chess_board import Chessboard, Move, getChessboardCopy
 from king import King
 from knight import Knight
 from pawn import Pawn
+from constants import _OTHER_TURN_COLOUR
 from queen import Queen
 from utils import Coord
 from rook import Rook
+import algorithm_utils as au
 
 class OptionsDeterminerInterface:
 
     PIECE_TYPES = [King, Queen, Knight, Bishop, Rook, Pawn]
+
+    def can_castle(king: King, rook: Rook, chessboard: Chessboard) -> bool:
+        if king.first_move_done or rook.first_move_done:
+            return False
+        for y in range(min(king.pos.y, rook.pos.y)+1, max(king.pos.y, rook.pos.y)):
+            if not chessboard.squares[king.pos.x][y] is None:
+                return False
+        opponent_moves = OptionsDeterminerInterface.determine_options(_OTHER_TURN_COLOUR[king.colour], chessboard, check_for_check=False)
+        if rook.pos.y < king.pos.y:
+            moves_coords = [move.destination for move in opponent_moves if move.destination.x == king.pos.x and \
+                                                                            rook.pos.y < move.destination.y and \
+                                                                                move.destination.y <= king.pos.y]
+        else:
+            moves_coords = [move.destination for move in opponent_moves if move.destination.x == king.pos.x and \
+                                                                            king.pos.y <= move.destination.y and \
+                                                                                move.destination.y < rook.pos.y]
+        return len(moves_coords) == 0
 
     class RookOptionsDeterminer:
 
@@ -97,37 +117,61 @@ class OptionsDeterminerInterface:
             assert type(piece) == Pawn, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"Pawn\""
             # Select the valid destinations given the chessboard
             valid_destinations: List[Coord] = []
+            en_passant: List[bool] = []
             # Determine forward direction based on colour
             forward = -1 if piece.colour == _COLOUR.White else 1
             # One forward
-            one_f = Coord(piece.pos.x+forward, piece.pos.y)
-            if chessboard.squares[one_f.x][one_f.y] is None:
-                # square is empty, move can be made
-                valid_destinations.append(one_f)
-                if not piece.first_move_done:
-                    # could move two squares
-                    two_f = Coord(piece.pos.x+2*forward, piece.pos.y)
-                    if chessboard.squares[two_f.x][two_f.y] is None:
-                        valid_destinations.append(two_f)
+            if piece.pos.x+forward >= 0 and piece.pos.x+forward < chessboard.x_dim:
+                one_f = Coord(piece.pos.x+forward, piece.pos.y)
+                piece_in_front = chessboard.squares[one_f.x][one_f.y]
+                if chessboard.squares[one_f.x][one_f.y] is None:
+                    # square is empty, move can be made
+                    valid_destinations.append(one_f)
+                    en_passant.append(False)
+                    if not piece.first_move_done:
+                        # could move two squares
+                        two_f = Coord(piece.pos.x+2*forward, piece.pos.y)
+                        if chessboard.squares[two_f.x][two_f.y] is None:
+                            valid_destinations.append(two_f)
+                            en_passant.append(False)
                 if piece.pos.y > 0:
                     one_f_l = Coord(piece.pos.x + forward, piece.pos.y-1)
                     target = chessboard.squares[one_f_l.x][one_f_l.y] 
                     if target is not None and target.colour != piece.colour:
                         valid_destinations.append(one_f_l)
+                        en_passant.append(False)
+                    elif target is None:
+                        piece_to_the_left = chessboard.squares[piece.pos.x][piece.pos.y-1]
+                        if not piece_to_the_left is None and type(piece_to_the_left) == Pawn:
+                            if piece_to_the_left.moved_two_squares_in_last_turn == 1:
+                                valid_destinations.append(one_f_l)
+                                en_passant.append(True)
                 if piece.pos.y < constants._BOARD_Y_DIM-1:
                     one_f_r = Coord(piece.pos.x + forward, piece.pos.y+1)
                     target = chessboard.squares[one_f_r.x][one_f_r.y] 
                     if target is not None and target.colour != piece.colour:
                         valid_destinations.append(one_f_r)
+                        en_passant.append(False)
+                    elif target is None:
+                        piece_to_the_right = chessboard.squares[piece.pos.x][piece.pos.y+1]
+                        if not piece_to_the_right is None and type(piece_to_the_right) == Pawn:
+                            if piece_to_the_right.moved_two_squares_in_last_turn == 1:
+                                valid_destinations.append(one_f_r)
+                                en_passant.append(True)
             ret = []
-            for new_pos in valid_destinations:
+            for i, new_pos in enumerate(valid_destinations):
                 promotions = [Bishop, Rook, Knight, Queen]
-                if new_pos.x == 0 or new_pos.x == constants._BOARD_X_DIM-1:
+                if en_passant[i]:
+                    capture_piece = chessboard.squares[piece.pos.x][new_pos.y]
+                else:
+                    capture_piece = None
+                if new_pos.x == 0 or new_pos.x == chessboard.x_dim-1:
                     # Pawn is promoted
                     for replacement_piece in promotions:
-                        ret.append(Move(piece, new_pos, replacement_piece))
+                        ret.append(Move(piece, new_pos, replacement_piece, capture_piece=capture_piece))
                 else:
-                    ret.append(Move(piece, new_pos))
+                    ret.append(Move(piece, new_pos, capture_piece=capture_piece))
+                
             return ret
 
     class KingOptionsDeterminer:
@@ -147,12 +191,24 @@ class OptionsDeterminerInterface:
                     if 0 <= cand_x and cand_x <= constants._BOARD_X_DIM-1 and \
                        0 <= cand_y and cand_y <= constants._BOARD_Y_DIM-1:
                        candidates.append(Coord(cand_x, cand_y))
+            rooks = chessboard.getPieces(piece.colour, Rook)
+            castling = []
+            for rook in rooks:
+                if OptionsDeterminerInterface.can_castle(piece, rook, chessboard):
+                    if rook.pos.y < piece.pos.y:
+                        new_king_pos = Coord(piece.pos.x, piece.pos.y-2)
+                        new_rook_pos = Coord(piece.pos.x, piece.pos.y-1)
+                    else:
+                        new_king_pos = Coord(piece.pos.x, piece.pos.y+2)
+                        new_rook_pos = Coord(piece.pos.x, piece.pos.y+1)
+                    castling.append(Move(piece, new_king_pos, castle=(rook, new_rook_pos)))
             for candidate in candidates:
                 target = chessboard.squares[candidate.x][candidate.y]
                 if target is None or target.colour != piece.colour:
                     # TODO: check for check
                     # if destination not in check 
                     valid_destinations.append(Move(piece, candidate))
+            valid_destinations.extend(castling)
             return valid_destinations 
 
     def __get_sequential_movement_destinations(destinations: List[Coord], piece: PieceInterface, chessboard: Chessboard) -> List[Coord]:
@@ -230,17 +286,12 @@ class OptionsDeterminerInterface:
     }
 
     def gives_up_king(move: Move, chessboard: Chessboard):
-        import copy
-        chessboard_copy = getChessboardCopy(chessboard)
         moving_player = move.piece.colour
         other_player = {
             _COLOUR.White: _COLOUR.Black,
             _COLOUR.Black: _COLOUR.White
         }[moving_player]
-        cc = ChessboardController()
-        piece_copy = chessboard_copy.squares[move.piece.pos.x][move.piece.pos.y]
-        move_copy = Move(piece_copy, move.destination)
-        cc.applyMove(chessboard_copy, move_copy)
+        chessboard_copy = au.applyMoveToCopy(chessboard, move)
         own_king = chessboard_copy.getPieces(moving_player, King)
         ret = False
         if own_king != []:

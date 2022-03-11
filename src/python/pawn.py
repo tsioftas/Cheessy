@@ -10,5 +10,6 @@ class Pawn(PieceInterface):
         first_move_done : bool = False):
         super().__init__(position, colour)
         self.first_move_done = first_move_done
+        self.moved_two_squares_in_last_turn = 0 # set to 1 by apply_move appropriately, determine options adds 1 if =1, otherwise sets to 0 
         self.name = "Pawn"
 

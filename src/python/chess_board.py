@@ -1,7 +1,9 @@
+from typing import Tuple
 from common_imports import List
 from constants import _BOARD_Y_DIM, _BOARD_X_DIM, _COLOUR
 from chess_pieces import PieceInterface, getPieceCopy
 from pawn import Pawn
+from king import King
 from rook import Rook
 from utils import Coord
 
@@ -19,6 +21,7 @@ class Chessboard:
     """
     def __init__(self,
      pieces: List[PieceInterface] = []):
+
         self.x_dim: int = _BOARD_X_DIM
         self.y_dim: int = _BOARD_Y_DIM
         # initialize squares as empty
@@ -37,12 +40,11 @@ class Chessboard:
     
     def __move_piece(self, piece: PieceInterface, destination: Coord):
         start = piece.pos
-        if type(piece) == Pawn:
+        if type(piece) == Pawn or type(piece) == King or type(piece) == Rook:
             piece.first_move_done = True
         if not self.__is_empty_at(destination):
             assert self.__at(destination).colour != piece.colour, "Invalid move, cannot move to a square containing a piece of the same colour"
             # other piece is captured
-            # TODO: add capturing logic?
             captured_piece = self.__at(destination)
             self.pieces.remove(captured_piece)
         self.squares[start.x][start.y] = None
@@ -62,6 +64,7 @@ class Chessboard:
             if piece.colour == colour and type(piece) == t:
                 ret.append(piece)
         return ret
+
     
 
 
@@ -73,16 +76,22 @@ class Move:
     def __init__(self,
         piece: PieceInterface,
         destination: Coord,
-        replacement_piece: PieceInterface = None):
+        promotion_piece: PieceInterface = None,
+        capture_piece: Pawn = None,
+        castle: Tuple[Rook, Coord] = None):
             self.piece = piece
             self.destination = destination
-            self.replacement_piece = replacement_piece
+            self.promotion_piece = promotion_piece
+            self.capture_piece = capture_piece
+            self.castle = castle
     
     def __str__(self):
-        if self.replacement_piece is None:
-            return f"{self.piece} moves to {self.destination}"
-        else:
-            return f"{self.piece} promoted {self.replacement_piece}"
+        s = f"{self.piece} moves to {self.destination}. "
+        if not self.capture_piece is None:
+            s += f"{self.piece} captures {self.capture_piece} "
+        if not self.promotion_piece is None:
+            s += f"{self.piece} promoted {self.promotion_piece} "
+        return s            
     
     def __repr__(self):
         return str(self)

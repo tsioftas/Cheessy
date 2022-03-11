@@ -24,13 +24,14 @@ To be used to bring together and coordinate all graphics items.
 """
 class GraphicsControllerHub:
     
-    def __init__(self):
+    def __init__(self, waittime):
         self.chessboardGC = ChessboardGraphicsController(_ASSETS_PATH)
+        self.waittime = waittime
     
     def display_image(self, chessboard: Chessboard):
         image = self.chessboardGC.chessboardToImage(chessboard)
         cv.imshow('board', image)
-        cv.waitKey(1)
+        cv.waitKey(self.waittime)
 
 """
 To be used as the parent class of graphics controllers. Not to be instantiated!
@@ -167,6 +168,15 @@ class ChessboardGraphicsController(GraphicsControllerInterface):
             p = 1-p
         for piece in chessboard.pieces:
             chessboard_img = self.paint_piece(piece, chessboard_img)
+        # add coordinates
+        for i in range(chessboard.x_dim):
+            text_pos = (10 + i*self.square_x_dim, 10)
+            colour = (0, 0, 0) if i%2 == 0 else (255, 255, 255)
+            cv.putText(chessboard_img, f"[{i}]", text_pos, cv.FONT_HERSHEY_SIMPLEX, 0.3, colour)
+        for i in range(chessboard.y_dim):
+            text_pos = (10, 10 + i*self.square_y_dim)
+            colour = (0, 0, 0) if i%2 == 0 else (255, 255, 255)
+            cv.putText(chessboard_img, f"[{i}]", text_pos, cv.FONT_HERSHEY_SIMPLEX, 0.3, colour)
         return chessboard_img
     
     def image_from_piece(self, piece: PieceInterface):

@@ -25,6 +25,7 @@ class PieceInterface:
         self.colour = colour
         self.name = "GenericPiece" # To be overwritten by concrete classes
         self.first_move_done = None
+        self.moved_two_squares_in_last_turn = None
 
     
     """
@@ -42,7 +43,12 @@ class PieceInterface:
 def getPieceCopy(other: PieceInterface):
     t = type(other)
     if other.first_move_done is not None:
-        return t(other.pos, other.colour, first_move_done=other.first_move_done)
+        if other.moved_two_squares_in_last_turn is not None:
+            p = t(other.pos, other.colour, first_move_done=other.first_move_done)
+            p.moved_two_squares_in_last_turn = other.moved_two_squares_in_last_turn
+            return p
+        else:
+            return t(other.pos, other.colour, first_move_done=other.first_move_done)
     else:
         return t(other.pos, other.colour)
 

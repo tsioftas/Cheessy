@@ -19,14 +19,3 @@ class Player:
     def get_next_move(self, chessboard: Chessboard):
         return self.algorithm.get_next_move(chessboard)
         
-
-"""
-Class to describe a move, i.e. a piece and its destination.
-"""
-class Move:
-
-    def __init__(self,
-        piece: PieceInterface,
-        destination: Coord):
-        self.piece = piece
-        self.destination = destination
