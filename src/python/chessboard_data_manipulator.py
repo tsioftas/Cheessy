@@ -110,11 +110,12 @@ class ChessboardDataManinpulator:
         data_dict = self.np_to_dict(self.data)
         white_win = 1 if winner == _COLOUR.White else 0 if winner == _COLOUR.Black else 0
         black_win = 1-white_win
+        player, opponent = _COLOUR.White, _COLOUR.Black
         for i, chessboard in enumerate(game_history):
             datum = self.chessboard_to_datum(chessboard)
             datum_str = self.datum_to_string(datum)
             if not datum_str in data_dict:
-                rt = self.justinianus.create_recursion_tree(chessboard)
+                rt = self.justinianus.create_recursion_tree(chessboard, opponent)
                 justinianus_simple_valfunction = self.justinianus.get_simple_valfunction()
                 justinianus_evaluation = justinianus_simple_valfunction(rt.root)
                 white_wins_count = white_win
@@ -124,13 +125,14 @@ class ChessboardDataManinpulator:
                 data_dict[datum_str] = [justinianus_evaluation, white_wins_count, black_wins_count, avg_percent_i_white, avg_percent_i_black]
             else:
                 d = data_dict[datum_str]
-                white_wins_count, black_wins_count, avg_percent_i_white, avg_percent_i_black = (0,1,2,3)
+                justinianus_evaluation, white_wins_count, black_wins_count, avg_percent_i_white, avg_percent_i_black = (0,1,2,3,4)
                 d[white_wins_count] += white_win
                 d[black_wins_count] += black_win
                 if white_win == 1:
                     d[avg_percent_i_white] = (d[avg_percent_i_white] * (d[white_wins_count] -1) + i) / d[white_wins_count]
                 else:
                     d[avg_percent_i_black] = (d[avg_percent_i_black] * (d[black_wins_count] -1) + i) / d[black_wins_count]
+            opponent, player = player, opponent
         self.data = self.dict_to_np(data_dict)
         to_save = np.zeros((self.data[0].shape[0], self.data[0].shape[1]+self.n_metadata))
         to_save[:,:-self.n_metadata] = self.data[0]

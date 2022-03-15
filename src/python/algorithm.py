@@ -8,8 +8,8 @@ from tensorflow.keras import datasets, layers, models, optimizers
 import matplotlib.pyplot as plt
 
 # Local imports
-from chess_board import Chessboard
-from chess_board_controller import ChessboardController, Move
+from chess_board import Chessboard, Move
+from chess_board_controller import ChessboardController
 from chess_pieces import PieceInterface
 from common_imports import List, Dict, TODO_Type
 from constants import _BOARD_X_DIM, _BOARD_Y_DIM, _COLOUR, \
@@ -23,7 +23,7 @@ from constants import _BOARD_X_DIM, _BOARD_Y_DIM, _COLOUR, \
 import algorithm_utils as au
 from king import King
 from knight import Knight
-from options_determiner import OptionsDeterminerInterface
+from options_determiner import OptionsDeterminerInterface, MoveFromChessNotation
 from pawn import Pawn
 from constants import _BOARD_X_DIM, _BOARD_Y_DIM
 from queen import Queen
@@ -45,6 +45,10 @@ class AlgorithmInterface:
 
     def get_next_move(self,
         chessboard: Chessboard) -> Move:
+        pass
+
+    def update(self,
+               move: Move) -> None:
         pass
 
 class RandomAlgorithm(AlgorithmInterface):
@@ -147,10 +151,12 @@ class Justinianus(AlgorithmInterface):
     def get_simple_valfunction(self):
         return Justinianus.simple_valfunction
     
-    def create_recursion_tree(self, chessboard) -> au.RecursionTree:
+    def create_recursion_tree(self, chessboard, colour=None) -> au.RecursionTree:
+        if colour is None:
+            colour = self.colour
         self.shared_resources.recursion_tree = au.RecursionTree()
         self.shared_resources.recursion_tree.initialize_tree(chessboard, 
-            self.colour, 
+            colour, 
             self.valfunction)
         self.shared_resources.current_state = self.shared_resources.recursion_tree.root
         return self.shared_resources.recursion_tree
@@ -165,7 +171,7 @@ class Justinianus(AlgorithmInterface):
         # Logic stuff
         # 2.Create search tree for this algorithm with current state as root
         if self.shared_resources.recursion_tree is None:
-            rt = self.create_recursion_tree(chessboard)
+            rt = self.create_recursion_tree(chessboard, self.colour)
         current_state = self.shared_resources.current_state
         current_state.expand()
         children = current_state.child_states
@@ -246,6 +252,27 @@ class Socrates(AlgorithmInterface):
             except Exception as e:
                 print(f"Error while parsing input: {e}")
 
+class Ichtys(AlgorithmInterface):
+
+    def __init__(self,
+                 colour: _COLOUR,
+                 path:str = None):
+        super().__init__(colour)
+
+        from stockfish import Stockfish
+
+        self.path = path
+        self.stockfish = Stockfish(self.path)
+    
+    def update(self,
+                move: Move):
+        move_str = move.to_chess_notation()
+        self.stockfish.make_moves_from_current_position([move_str])
+    
+    def get_next_move(self, chessboard: Chessboard) -> Move:
+        move_str = self.stockfish.get_best_move()
+        return MoveFromChessNotation(move_str, chessboard)
+
 class Pletho(AlgorithmInterface):
 
     def __init__(self,
@@ -300,7 +327,9 @@ class Pletho(AlgorithmInterface):
         model.add(layers.Dense(units=self.data_manipulator.n_metadata, activation='relu', use_bias=True))
         model.summary()
         model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
-        model.fit(self.data_x, self.data_y, epochs=100, batch_size=32)
+        from keras import backend as K
+        K.set_value(model.optimizer.learning_rate, 1e-3)
+        model.fit(self.data_x, self.data_y, epochs=50, batch_size=128)
         return model
     
     def get_next_move(self, chessboard: Chessboard) -> Move:
@@ -310,7 +339,16 @@ class Pletho(AlgorithmInterface):
         for possible_move in possible_moves:
             resulting_chessboad = au.applyMoveToCopy(chessboard, possible_move)
             datum = self.data_manipulator.chessboard_to_datum(resulting_chessboad).reshape(1, chessboard.x_dim, chessboard.y_dim, 1)
-            state_value  = self.model.predict(datum)[0][0] / (self.model.predict(datum)[0][0] + self.model.predict(datum)[0][1])
+            prediction = self.model.predict(datum)[0]
+            # prediction form: justinianus_evaluation, white_wins_count, black_wins_count, avg_percent_i_white, avg_percent_i_black
+            justinianus_evaluation = prediction[0] / np.sum(list(_JUSTINIANUS_DEFAULT_PIECE_VALUE.values())) # normalized
+            white_wins_count = prediction[1]
+            black_wins_count = prediction[2]
+            white_win_prob = white_wins_count / (white_wins_count + black_wins_count)
+            progress_to_white_win = prediction[3]
+            progress_to_black_win = prediction[4]
+            white_winning = progress_to_white_win - progress_to_black_win > 3.0 # Arbitrary!
+            state_value = justinianus_evaluation + white_win_prob + (1 if white_winning else 0)
             if self.colour == _COLOUR.White:
                 # wants to maximize value
                 if best_state_value is None or state_value >= best_state_value:

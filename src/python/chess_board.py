@@ -4,6 +4,9 @@ from constants import _BOARD_Y_DIM, _BOARD_X_DIM, _COLOUR
 from chess_pieces import PieceInterface, getPieceCopy
 from pawn import Pawn
 from king import King
+from queen import Queen
+from knight import Knight
+from bishop import Bishop
 from rook import Rook
 from utils import Coord
 
@@ -95,6 +98,19 @@ class Move:
     
     def __repr__(self):
         return str(self)
+    
+    def to_chess_notation(self) -> str:
+        promotion_piece_strs = {
+            Queen: 'q',
+            Rook: 'r',
+            Bishop: 'b',
+            Knight: 'n',
+        }
+        if self.promotion_piece is None:
+            promotion_str = ""
+        else:
+            promotion_str = promotion_piece_strs[self.promotion_piece]
+        return self.piece.pos.to_chess_notation() + self.destination.to_chess_notation() + promotion_str           
 
 def getChessboardCopy(other: Chessboard):
     pieces_copy = [getPieceCopy(p) for p in other.pieces]

@@ -36,4 +36,20 @@ class Coord:
     
     def __repr__(self):
         return str(self)
+    
+    def to_chess_notation(self):
+        col = col_to_chess_notation(self.y)
+        row = row_to_chess_notation(self.x)
+        return f"{col}{row}"
 
+def col_to_chess_notation(y: int) -> str:
+    return chr(ord('a')+y)
+
+def row_to_chess_notation(x: int) -> str:
+    return str(constants._BOARD_X_DIM-x)
+
+def chess_notation_to_col(c: str) -> int:
+    return ord(c) - ord('a')
+
+def chess_notation_to_row(c: str) -> int:
+    return constants._BOARD_X_DIM - int(c)

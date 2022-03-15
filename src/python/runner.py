@@ -2,6 +2,8 @@ from msvcrt import getche
 from random import Random
 import numpy as np
 
+from stockfish import Stockfish
+
 from algorithm import Justinianus, RandomAlgorithm, SharedResources, Pletho, Socrates
 from chess_board import Chessboard, getChessboardCopy
 from chess_board_controller import ChessboardController
@@ -12,9 +14,10 @@ from player import Player
 from graphics import GraphicsControllerHub
 from chessboard_data_manipulator import ChessboardDataManinpulator
 import algorithm_utils as au
+from algorithm import Ichtys
 from randomwisdom import WiseOne
 
-if __name__ == "__main__":
+def run_game():
     # Greetings
     oracle = WiseOne()
     print(f"The wise one says: {oracle.getSaying()}")
@@ -35,10 +38,10 @@ if __name__ == "__main__":
     init_state_str = chessboard_data_manipulator.datum_to_string(chessboard_data_manipulator.chessboard_to_datum(chessboard))
     data_dict = chessboard_data_manipulator.np_to_dict(chessboard_data_manipulator.data)
     init_state_data = data_dict.get(init_state_str, 0)
-    more_white_wins = init_state_data[0] > init_state_data[1]
+    more_white_wins = init_state_data[1] > init_state_data[2]
     c1 = 1 if more_white_wins else 0
     players = [# Player(colours[c1], algorithm=Pletho, seed=1, data_manipulator=chessboard_data_manipulator),
-               Player(colours[c1], algorithm=Socrates),
+               Player(colours[c1], algorithm=Ichtys, path='stockfish/stockfish_14.1_win_x64_avx2.exe'),
                # Player(colours[1-c1], algorithm=Socrates)]
                # Player(colours[1-c1], algorithm=Justinianus, seed=2, shared_resources=shared_resources)]
                Player(colours[1-c1], algorithm=Pletho, seed=2, data_manipulator=chessboard_data_manipulator)]
@@ -79,6 +82,8 @@ if __name__ == "__main__":
                 else:
                     shared_resources.current_state = shared_resources.current_state.expand(chosen_move=move)
         game_history.append(getChessboardCopy(chessboard))
+        player1.algorithm.update(move)
+        player2.algorithm.update(move)
         # draw graphics
         graphicsControllerHub.display_image(chessboard)
         move = player2.get_next_move(chessboard)
@@ -101,12 +106,24 @@ if __name__ == "__main__":
                 else:
                     shared_resources.current_state = shared_resources.current_state.expand(chosen_move=move)
         game_history.append(getChessboardCopy(chessboard))
+        player1.algorithm.update(move)
+        player2.algorithm.update(move)
         # draw graphics
         graphicsControllerHub.display_image(chessboard)
         # TODO: add win check
     print("Do you wish to save this game's data to the dataset? (default yes, n for no): ", end="")
-    x = input()
+    print("FORCE-SAVE-ON!")
+    x = 'y'# input()
     if x != 'n':
         print("Saving game data...")
         chessboard_data_manipulator.update_and_save_data(filename, game_history, winner)
     print("Goodbye.")
+
+if __name__ == "__main__":
+    counter = 0
+    try:
+        while True:
+            run_game()
+            counter += 1
+    except KeyboardInterrupt:
+        print(f"\nInterrupted after {counter} games.")

@@ -15,7 +15,7 @@ from knight import Knight
 from pawn import Pawn
 from constants import _OTHER_TURN_COLOUR
 from queen import Queen
-from utils import Coord
+from utils import Coord, chess_notation_to_col, chess_notation_to_row
 from rook import Rook
 import algorithm_utils as au
 
@@ -38,7 +38,9 @@ class OptionsDeterminerInterface:
             moves_coords = [move.destination for move in opponent_moves if move.destination.x == king.pos.x and \
                                                                             king.pos.y <= move.destination.y and \
                                                                                 move.destination.y < rook.pos.y]
-        return len(moves_coords) == 0
+        if len(moves_coords) > 0:
+            return False
+        return True
 
     class RookOptionsDeterminer:
 
@@ -176,7 +178,7 @@ class OptionsDeterminerInterface:
 
     class KingOptionsDeterminer:
 
-        def determine_options(piece: PieceInterface, chessboard: Chessboard) -> List[Move]:
+        def determine_options(piece: PieceInterface, chessboard: Chessboard, check_for_castle=True) -> List[Move]:
             assert type(piece) == King, f"Invalid type \"{type(piece)}\" given to options determiner. Expected \"King\""
             # Select the valid destinations given the chessboard
             valid_destinations: List[Coord] = []
@@ -194,7 +196,7 @@ class OptionsDeterminerInterface:
             rooks = chessboard.getPieces(piece.colour, Rook)
             castling = []
             for rook in rooks:
-                if OptionsDeterminerInterface.can_castle(piece, rook, chessboard):
+                if check_for_castle and OptionsDeterminerInterface.can_castle(piece, rook, chessboard):
                     if rook.pos.y < piece.pos.y:
                         new_king_pos = Coord(piece.pos.x, piece.pos.y-2)
                         new_rook_pos = Coord(piece.pos.x, piece.pos.y-1)
@@ -321,7 +323,10 @@ class OptionsDeterminerInterface:
         for piece in pieces:
             if piece.colour == turnColour:
                 t = type(piece)
-                piece_options = OptionsDeterminerInterface.determiner_map[t].determine_options(piece, chessboard)
+                if t == King and not check_for_check:
+                    piece_options = OptionsDeterminerInterface.determiner_map[t].determine_options(piece, chessboard, False)
+                else:
+                    piece_options = OptionsDeterminerInterface.determiner_map[t].determine_options(piece, chessboard)
                 if check_for_check:
                     debug_piece_x = None
                     debug_piece_y = None
@@ -340,4 +345,26 @@ class OptionsDeterminerInterface:
         #     print(f"{turnColour} Player Options: {player_options}s")
         return player_options
 
-    
+def MoveFromChessNotation(move_str: str, chessboard: Chessboard) -> Move:
+    # TODO: board size assumption!
+    row_from = chess_notation_to_row(move_str[1])
+    col_from = chess_notation_to_col(move_str[0])
+    row_to = chess_notation_to_row(move_str[3])
+    col_to = chess_notation_to_col(move_str[2])
+    piece_from = chessboard.squares[row_from][col_from]
+    moves_options = OptionsDeterminerInterface.determine_options(piece_from.colour, chessboard)
+    promotion_piece_types = {
+        'q': Queen,
+        'r': Rook,
+        'b': Bishop,
+        'n': Knight
+    }
+    for move in moves_options:
+        if move.piece.pos.x == row_from and move.piece.pos.y == col_from \
+            and move.destination.x == row_to and move.destination.y == col_to:
+            if move.promotion_piece is None:
+                return move
+            else:
+                promotion_piece = promotion_piece_types[move_str[4]]
+                if promotion_piece == move.promotion_piece:
+                    return move
